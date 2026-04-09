@@ -3,6 +3,7 @@
 import json
 import os
 import torch
+import sentencepiece as spm
 
 from ..config import ExperimentConfig
 from ..models import build_model
@@ -21,9 +22,20 @@ class ExperimentRunner:
         self.config = config
         self.seed = seed
 
+    def _sync_vocab_size(self):
+        """Override config vocab_size with the actual tokenizer vocab size."""
+        tok_path = self.config.training.tokenizer_path
+        if tok_path and os.path.exists(tok_path):
+            sp = spm.SentencePieceProcessor(model_file=tok_path)
+            actual = sp.GetPieceSize()
+            if actual != self.config.model.vocab_size:
+                print(f"  vocab_size: config={self.config.model.vocab_size} -> tokenizer={actual}")
+                self.config.model.vocab_size = actual
+
     def run(self) -> dict:
         """Full pipeline."""
         set_seed(self.seed)
+        self._sync_vocab_size()
         model = build_model(self.config)
 
         # Train
@@ -64,6 +76,7 @@ class ExperimentRunner:
 
     def run_post_training(self, checkpoint_path: str) -> dict:
         """For C15-C20: load checkpoint, apply quant/eval variants only (no training)."""
+        self._sync_vocab_size()
         model = self._load_checkpoint(checkpoint_path)
 
         if self.config.quant.method != "none":
