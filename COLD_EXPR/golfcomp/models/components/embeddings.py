@@ -7,17 +7,9 @@ import torch.nn.functional as F
 class TokenEmbedding(nn.Module):
     def __init__(self, vocab_size, dim):
         super().__init__()
-        self.vocab_size = vocab_size
         self.weight = nn.Parameter(torch.randn(vocab_size, dim) * 0.02)
 
     def forward(self, ids):
-        if ids.max() >= self.vocab_size or ids.min() < 0:
-            bad = ids[(ids < 0) | (ids >= self.vocab_size)]
-            raise ValueError(
-                f"Token IDs out of range: got {bad[:10].tolist()} "
-                f"(min={ids.min().item()}, max={ids.max().item()}, "
-                f"vocab_size={self.vocab_size})"
-            )
         return F.embedding(ids, self.weight)
 
 

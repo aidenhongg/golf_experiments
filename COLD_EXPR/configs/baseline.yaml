@@ -14,7 +14,7 @@ model:
   use_parallel_residuals: true
   parallel_start_layer: 7
   use_skip_gates: true
-  qk_gain: 5.0
+  qk_gain: 5.25
   logit_softcap: 30.0
   rope_partial_dim: 16
   tie_embeddings: true
@@ -47,6 +47,10 @@ training:
   data_path: ./data/fineweb_sp8192/
   tokenizer_path: ./data/tokenizers/fineweb_8192_bpe.model
   log_interval_seconds: 30.0
+  pre_quant_ttt: true
+  pre_quant_ttt_epochs: 10
+  pre_quant_ttt_lr: 0.00045
+  pre_quant_ttt_freeze_blocks: 1
 quant:
   method: sdclip+gptq
   int6_k: 12.85

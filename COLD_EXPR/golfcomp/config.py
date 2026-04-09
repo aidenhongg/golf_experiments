@@ -73,8 +73,14 @@ class TrainingConfig:
     qat_start_lr_scale: float = 0.15
     qat_bits: int = 6
     data_path: str = "./data/fineweb_sp8192/"
+    val_data_path: str = ""
     tokenizer_path: str = "./data/tokenizers/fineweb_8192_bpe.model"
     log_interval_seconds: float = 30.0
+    pre_quant_ttt: bool = False
+    pre_quant_ttt_epochs: int = 10
+    pre_quant_ttt_lr: float = 0.00045
+    pre_quant_ttt_freeze_blocks: int = 1
+    pre_quant_ttt_seq_len: int = 1024
 
 
 @dataclass
