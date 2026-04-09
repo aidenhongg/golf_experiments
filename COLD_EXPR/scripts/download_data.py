@@ -63,7 +63,7 @@ def download_sp8192(repo_dir, val_only=False):
 
     script = os.path.join(repo_dir, "data", "cached_challenge_fineweb.py")
     if os.path.exists(script):
-        cmd = [sys.executable, script, "--variant", "sp8192", "--skip-manifest"]
+        cmd = [sys.executable, script, "--variant", "sp8192"]
         subprocess.run(cmd, env=env, check=True, cwd=repo_dir)
         # Move data to our expected paths
         pg_data = Path(repo_dir) / "data" / "datasets" / "fineweb10B_sp8192"
