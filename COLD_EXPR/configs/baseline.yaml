@@ -1,0 +1,59 @@
+name: cold_baseline
+category: baseline
+model:
+  arch: transformer
+  num_layers: 11
+  model_dim: 512
+  num_heads: 8
+  num_kv_heads: 4
+  mlp_mult: 3
+  vocab_size: 8192
+  seq_len: 1024
+  activation: leaky_relu_sq
+  use_xsa: true
+  use_parallel_residuals: true
+  parallel_start_layer: 7
+  use_skip_gates: true
+  qk_gain: 5.0
+  logit_softcap: 30.0
+  rope_partial_dim: 16
+  tie_embeddings: true
+  embedding_type: standard
+  use_smear_gate: true
+  bigram_hash_buckets: 3072
+  bigram_hash_dim: 128
+  recurrence_type: depth
+  recurrence_layers: [3, 4, 5]
+  recurrence_start_step: 2000
+training:
+  max_time_seconds: 1200
+  batch_tokens: 128000
+  micro_batch_tokens: 32768
+  grad_accum_steps: 4
+  matrix_lr: 0.022
+  embed_lr: 0.035
+  scalar_lr: 0.025
+  weight_decay: 0.095
+  grad_clip: 0.3
+  optimizer: muon
+  warmup_steps: 200
+  warmdown_frac: 0.72
+  cooldown_shape: 1_sqrt
+  use_ema: true
+  ema_decay: 0.9965
+  use_qat: true
+  qat_start_lr_scale: 0.15
+  qat_bits: 6
+  data_path: ./data/fineweb_sp8192/
+  tokenizer_path: ./data/tokenizers/fineweb_8192_bpe.model
+  log_interval_seconds: 30.0
+quant:
+  method: sdclip+gptq
+  int6_k: 12.85
+  int8_embed_k: 20.0
+eval:
+  window_size: 2048
+  stride: 64
+compression:
+  method: brotli
+seeds: [42]

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(browse)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls:*)",
+      "Bash(python -m py_compile golfcomp/quantization/gptq.py)",
+      "Bash(python -m py_compile golfcomp/models/transformer.py)",
+      "Bash(python -m py_compile golfcomp/models/components/embeddings.py)",
+      "Bash(python -m py_compile golfcomp/training/data.py)"
+    ]
+  }
+}

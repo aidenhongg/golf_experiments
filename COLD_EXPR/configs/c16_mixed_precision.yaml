@@ -1,0 +1,4 @@
+_base: configs/baseline.yaml
+name: c16_mixed_precision
+category: quantization
+compare_to: cold_baseline

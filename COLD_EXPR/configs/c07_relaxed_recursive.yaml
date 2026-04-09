@@ -1,0 +1,9 @@
+_base: configs/baseline.yaml
+name: c07_relaxed_recursive
+category: ablation
+model:
+  recurrence_type: relaxed_recursive
+  num_shared_blocks: 7
+  num_loops: 2
+  lora_rank: 8
+compare_to: cold_baseline

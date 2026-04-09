@@ -1,0 +1,7 @@
+_base: configs/baseline.yaml
+name: c08_engramlite
+category: ablation
+model:
+  use_engramlite: true
+  bigram_hash_buckets: 0
+compare_to: cold_baseline

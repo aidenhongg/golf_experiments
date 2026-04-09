@@ -1,0 +1,9 @@
+_base: configs/baseline.yaml
+name: c21_sp16384
+category: vocab
+model:
+  vocab_size: 16384
+training:
+  data_path: ./data/fineweb_sp16384/
+  tokenizer_path: ./data/tokenizers/fineweb_16384_bpe.model
+compare_to: cold_baseline

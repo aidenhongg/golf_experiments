@@ -1,0 +1,4 @@
+_base: configs/baseline.yaml
+name: c15_sdclip_sweep
+category: quantization
+compare_to: cold_baseline

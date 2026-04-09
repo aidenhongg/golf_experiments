@@ -1,0 +1,7 @@
+_base: configs/baseline.yaml
+name: c03_xlstm_hybrid
+category: architecture
+model:
+  arch: xlstm_hybrid
+  xlstm_num_layers: 8
+compare_to: cold_baseline

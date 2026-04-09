@@ -1,0 +1,4 @@
+_base: configs/baseline.yaml
+name: c20_sliding_window
+category: eval_time
+compare_to: cold_baseline

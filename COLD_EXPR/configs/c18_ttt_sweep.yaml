@@ -1,0 +1,7 @@
+_base: configs/baseline.yaml
+name: c18_ttt_sweep
+category: eval_time
+eval:
+  use_ttt: true
+  ttt_type: lora
+compare_to: cold_baseline

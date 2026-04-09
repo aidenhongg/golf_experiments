@@ -1,0 +1,4 @@
+_base: configs/baseline.yaml
+name: c17_compressor_sweep
+category: quantization
+compare_to: cold_baseline

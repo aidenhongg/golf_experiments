@@ -1,0 +1,8 @@
+_base: configs/baseline.yaml
+name: c01_gla_hybrid
+category: architecture
+model:
+  arch: gla_hybrid
+  gla_num_layers: 8
+  gla_expand_ratio: 1
+compare_to: cold_baseline

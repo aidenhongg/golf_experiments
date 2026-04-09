@@ -1,0 +1,8 @@
+_base: configs/baseline.yaml
+name: c06_basis_sharing
+category: ablation
+model:
+  recurrence_type: basis_sharing
+  basis_rank: 64
+  recurrence_start_step: 0
+compare_to: cold_baseline

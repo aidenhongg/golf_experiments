@@ -1,0 +1,6 @@
+_base: configs/baseline.yaml
+name: c19_slot_vs_lora
+category: eval_time
+eval:
+  use_ttt: true
+compare_to: cold_baseline

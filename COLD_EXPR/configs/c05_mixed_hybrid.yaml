@@ -1,0 +1,6 @@
+_base: configs/baseline.yaml
+name: c05_mixed_hybrid
+category: architecture
+model:
+  arch: mixed_hybrid
+compare_to: cold_baseline

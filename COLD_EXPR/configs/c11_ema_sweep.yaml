@@ -1,0 +1,6 @@
+_base: configs/baseline.yaml
+name: c11_ema_sweep
+category: hp_sweep
+training:
+  max_time_seconds: 600
+compare_to: cold_baseline

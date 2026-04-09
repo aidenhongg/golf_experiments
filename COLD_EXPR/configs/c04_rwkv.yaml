@@ -1,0 +1,10 @@
+_base: configs/baseline.yaml
+name: c04_rwkv
+category: architecture
+model:
+  arch: rwkv
+  rwkv_num_layers: 11
+  use_xsa: false
+training:
+  use_ema: false
+compare_to: cold_baseline

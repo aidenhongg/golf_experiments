@@ -1,0 +1,6 @@
+_base: configs/baseline.yaml
+name: c10_no_parallel_res
+category: ablation
+model:
+  use_parallel_residuals: false
+compare_to: cold_baseline

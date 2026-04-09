@@ -1,0 +1,8 @@
+_base: configs/baseline.yaml
+name: c02_mamba_hybrid
+category: architecture
+model:
+  arch: mamba_hybrid
+  mamba_num_layers: 8
+  mamba_d_state: 32
+compare_to: cold_baseline
