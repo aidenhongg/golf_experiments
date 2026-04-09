@@ -3,7 +3,7 @@
 ## 1. Provision RunPod Instance
 
 - **GPU**: RTX 5090 (32GB GDDR7)
-- **Template**: `runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04`
+- **Template**: `runpod/pytorch:2.7.0-py3.11-cuda12.8.1-devel-ubuntu22.04`
 - **Disk**: 100GB (data + checkpoints + results)
 - **Cloud type**: Secure Cloud (lower latency)
 
@@ -20,26 +20,43 @@ cd /workspace
 
 cd /workspace/COLD_EXPR
 
-# Install the package + deps
+# Install PyTorch 2.7+ for Blackwell SM_120 (if not already in the template)
+pip install 'torch>=2.7' --index-url https://download.pytorch.org/whl/cu128
+
+# Install the package + core deps
 pip install -e .
 
-# Install flash-attn (must build from source for 5090/Blackwell)
-pip install flash-attn --no-build-isolation
-
-# Install optional architecture deps
-pip install fla mamba-ssm
-
-# Verify
+# Verify GPU is recognized
 python -c "import torch; print(torch.cuda.get_device_name(0))"
-python -c "from flash_attn import flash_attn_func; print('FA2 OK')"
+python -c "import torch; print('SM:', torch.cuda.get_device_capability())"
+# Expected: SM: (12, 0) for RTX 5090
+
+# Verify attention backend (uses PyTorch SDPA on Blackwell, no flash-attn needed)
 python -c "from golfcomp.config import ExperimentConfig; print('golfcomp OK')"
 ```
 
-If flash-attn fails to build for Blackwell, install from the nightly wheel:
+### Optional: Install C1 (GLA) dependencies
 ```bash
-pip install flash-attn --no-build-isolation -U \
-  --extra-index-url https://flash-attn.github.io/whl/cu124/
+# fla uses Triton kernels (arch-portable, works on SM_120)
+pip install flash-linear-attention
 ```
+
+### Optional: Install C2 (Mamba) dependencies
+```bash
+# mamba-ssm must be built from source for SM_120 (pre-built wheels lack it)
+export TORCH_CUDA_ARCH_LIST="12.0"
+export MAMBA_FORCE_BUILD=TRUE
+pip install causal-conv1d --no-build-isolation
+pip install mamba-ssm --no-build-isolation
+# Verify:
+python -c "from mamba_ssm import Mamba2; print('Mamba2 OK')"
+```
+
+### Note on flash-attn (FA2)
+flash-attn 2.x **cannot compile for SM_120** (nvcc segfaults, see
+[Dao-AILab/flash-attention#2361](https://github.com/Dao-AILab/flash-attention/issues/2361)).
+The codebase automatically falls back to PyTorch's native `scaled_dot_product_attention`
+which uses the same memory-efficient/flash algorithms via CUTLASS on Blackwell.
 
 ---
 
@@ -274,16 +291,16 @@ python scripts/analyze_results.py --results results/ --output results/
 | `cudnn.benchmark` | `True` (already set) | Auto-tune kernels for 5090 architecture |
 | `cudnn.deterministic` | `False` (already set) | 10-30% throughput gain |
 | `torch.compile` | On activations + RoPE | Fuses ops on 5090 tensor cores |
-| Flash Attention | FA2 | FA3 not yet available for Blackwell in flash-attn pip |
-| Micro-batch | 32K tokens | Fits in 32GB GDDR7 with FA2 |
+| Attention | PyTorch SDPA | FA2 can't compile for SM_120; SDPA uses CUTLASS flash backend |
+| Micro-batch | 32K tokens | Fits in 32GB GDDR7 with SDPA |
 | Grad accum | 4 steps | Effective batch = 128K tokens |
 
 **If OOM**: Reduce `micro_batch_tokens` in the YAML config from 32768 to 16384 and increase `grad_accum_steps` from 4 to 8.
 
-**If slow**: Check that flash-attn compiled for the correct SM architecture. RTX 5090 is sm_100 (Blackwell). Run:
+**If slow**: Verify GPU architecture is detected correctly. RTX 5090 is SM_120 (Blackwell consumer). Run:
 ```bash
 python -c "import torch; print(torch.cuda.get_device_capability())"
-# Should print (10, 0) for Blackwell
+# Should print (12, 0) for RTX 5090
 ```
 
 ---

@@ -10,14 +10,17 @@ class GLABlock(nn.Module):
         super().__init__()
         from fla.layers import GatedLinearAttention
         self.norm1 = nn.LayerNorm(dim)
-        self.gla = GatedLinearAttention(d_model=dim, expand_ratio=expand_ratio)
+        # fla >= 0.3: API uses hidden_size + expand_k/expand_v (not d_model/expand_ratio)
+        self.gla = GatedLinearAttention(hidden_size=dim, expand_k=expand_ratio, expand_v=expand_ratio)
         self.norm2 = nn.LayerNorm(dim)
         self.mlp = nn.Sequential(
             nn.Linear(dim, dim * 3), LeakyReLUSq(), nn.Linear(dim * 3, dim),
         )
 
     def forward(self, x):
-        x = x + self.gla(self.norm1(x))
+        # fla >= 0.3: GatedLinearAttention.forward() returns (output, state)
+        gla_out = self.gla(self.norm1(x))
+        x = x + (gla_out[0] if isinstance(gla_out, tuple) else gla_out)
         x = x + self.mlp(self.norm2(x))
         return x
 

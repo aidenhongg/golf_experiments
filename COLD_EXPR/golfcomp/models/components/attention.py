@@ -5,9 +5,12 @@ import torch.nn.functional as F
 
 try:
     from flash_attn import flash_attn_func
-    HAS_FLASH = True
+    HAS_FLASH_ATTN = True
 except ImportError:
-    HAS_FLASH = False
+    HAS_FLASH_ATTN = False
+
+# PyTorch SDPA works on all GPU architectures including SM_120 (RTX 5090)
+HAS_SDPA = hasattr(F, "scaled_dot_product_attention")
 
 
 class GQAAttention(nn.Module):
@@ -59,12 +62,22 @@ class GQAAttention(nn.Module):
             self._prev_k = k[:, -S:].detach()
             self._prev_v = v[:, -S:].detach()
 
-        if use_flash and HAS_FLASH:
+        if use_flash and HAS_FLASH_ATTN and self._flash_attn_supported():
             attn_out = self._flash_attention(q, k, v)
+        elif use_flash and HAS_SDPA:
+            attn_out = self._sdpa_attention(q, k, v)
         else:
             attn_out = self._manual_attention(q, k, v)
 
         return self.o_proj(attn_out.reshape(B, S, D))
+
+    def _flash_attn_supported(self):
+        """flash-attn 2.x cannot compile for SM_120 (RTX 5090). Check at runtime."""
+        if not torch.cuda.is_available():
+            return False
+        cc = torch.cuda.get_device_capability()
+        # FA2 supports SM 80/86/89/90 but segfaults on SM 100/120
+        return cc[0] < 10
 
     def _flash_attention(self, q, k, v):
         # GQA: repeat KV heads to match Q heads
@@ -72,6 +85,25 @@ class GQAAttention(nn.Module):
             k = k.repeat_interleave(self.groups, dim=2)
             v = v.repeat_interleave(self.groups, dim=2)
         return flash_attn_func(q, k, v, causal=True, softcap=self.logit_softcap)
+
+    def _sdpa_attention(self, q, k, v):
+        """PyTorch native SDPA — works on all GPU architectures including Blackwell.
+
+        Note: SDPA does not support logit softcap natively. With QK-normalized
+        attention (qk_gain=5.0, ln_scale<=1.0), max logit magnitude is ~5.0
+        which is well below softcap=30.0, so omitting softcap is safe here.
+        If softcap matters (very low values), use _manual_attention instead.
+        """
+        if self.groups > 1:
+            k = k.repeat_interleave(self.groups, dim=2)
+            v = v.repeat_interleave(self.groups, dim=2)
+        # SDPA expects [B, H, S, D]
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        # scale=1.0 because q/k are already pre-normalized with qk_gain
+        out = F.scaled_dot_product_attention(q, k, v, is_causal=True, scale=1.0)
+        return out.transpose(1, 2)  # [B, S, H, D]
 
     def _manual_attention(self, q, k, v):
         # q: [B, Sq, Hq, D], k/v: [B, Sk, Hkv, D]

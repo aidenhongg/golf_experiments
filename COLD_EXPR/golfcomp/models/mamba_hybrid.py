@@ -56,7 +56,9 @@ class MambaBlock(nn.Module):
         )
 
     def forward(self, x):
-        x = x + self.ssm(self.norm1(x))
+        # Mamba2.forward() returns a tensor; SimpleSSM fallback also returns a tensor
+        ssm_out = self.ssm(self.norm1(x))
+        x = x + (ssm_out[0] if isinstance(ssm_out, tuple) else ssm_out)
         x = x + self.mlp(self.norm2(x))
         return x
 
